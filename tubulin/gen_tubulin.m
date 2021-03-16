@@ -6,7 +6,10 @@ for n = 1:walkLength
     Wn(n) = sum(W(1:n));
 end
 
-kn = exp(2*pi*1j* clip(k0 + Wn, kmin, kmax));
+kn = zeros(walkLength, 1);
+for n = 1:walkLength
+    kn(n) = exp(2*pi*1j* clip(k0 + Wn(n), kmin, kmax));
+end
 
 vn = zeros(walkLength, 1);
 for n = 1:walkLength

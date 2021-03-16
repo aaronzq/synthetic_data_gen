@@ -13,8 +13,15 @@ for n = 1:walkLength
     Wn_axi(n) = sum(W_axi(1:n));
 end
 
-kn_lat = exp(2*pi*1j* clip(k0_lat + Wn_lat, kmin_lat, kmax_lat));
-kn_axi = exp(2*pi*1j* clip(k0_axi + Wn_axi, kmin_axi, kmax_axi));
+kn_lat = zeros(walkLength, 1);
+for n = 1:walkLength
+    kn_lat(n) = exp(2*pi*1j* clip(k0_lat + Wn_lat(n), kmin_lat, kmax_lat));
+end
+
+kn_axi = zeros(walkLength, 1);
+for n = 1:walkLength
+    kn_axi(n) = exp(2*pi*1j* clip(k0_axi + Wn_axi(n), kmin_axi, kmax_axi));
+end
 
 vn = zeros(walkLength, 3);
 for n = 1:walkLength

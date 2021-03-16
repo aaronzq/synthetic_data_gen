@@ -7,7 +7,7 @@ brightness = 120;             % (unit8)
 walkLength = 300;             % how many step of the growing process
 dk = 0.02;                    % stiffness: higher, more flexible
 v0 = 3;                       % grow speed (um/step): higher, faster
-tubulinNum = 50;              % number of tubulins
+tubulinNum = 25;              % number of tubulins
 %% ==============user-defined parameters ends=============================
 
 
@@ -16,8 +16,8 @@ trajectory = zeros(walkLength+1, 2, tubulinNum);
 for i = 1 : round(tubulinNum/2)
     x0 = gardenSize(1)*rand(1) + 0*j;
     k0 = 0.25 + 0.05*(rand(1)-0.5)*2;
-    kmin = 0.2;
-    kmax = 0.3;
+    kmin = 0.1;
+    kmax = 0.4;
     flag = 0;
     while flag == 0
         try 
@@ -32,8 +32,8 @@ end
 for i = round(tubulinNum/2)+1 : tubulinNum
     x0 = 0 + gardenSize(2)*rand(1)*j;
     k0 = 0.05*(rand(1)-0.5)*2;
-    kmin = -0.1;
-    kmax = 0.1;
+    kmin = -0.3;
+    kmax = 0.3;
     flag = 0;
     while flag == 0
         try

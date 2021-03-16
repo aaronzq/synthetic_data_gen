@@ -1,13 +1,13 @@
 %% generate 3D tubulins (don't know if it exists :))
 %% ==============user-defined parameters starts=============================
 
-imgNum = 2;                   % the number of generated images
+imgNum = 1;                   % the number of generated images
 
 gardenSize = [500, 500, 80];   % a garden to grow tubulins (x, y and z, um)
 cropSize = [300,300, 60];      % crop a sub-region of the garden
 brightness = 60;               % (uint8)
 
-tubulinNum = 60;               % number of tubulins
+tubulinNum = 100;               % number of tubulins
 walkLength = 1800;             % how many step of the growing process
 dk_lat = 0.02/2.5;             % stiffness: higher, more flexible (lateral)
 dk_axi = 0.01/2.5;             % stiffness: higher, more flexible (axial)
@@ -23,10 +23,10 @@ while nTry  <= imgNum
         for i = 1 : round(tubulinNum/3)
             x0 = [gardenSize(1)*rand(1) 0 0];
             k0_lat = 0.25 + 0.05*(rand(1)-0.5)*2;
-            k0_axi = 0.25 + 0.05*(rand(1)-0.5)*2;
-            kmin_lat = 0.2;
-            kmax_lat = 0.3;
-            kmin_axi = 0.2;
+            k0_axi = 0.25 - 0.05 + 0.05*(rand(1)-0.5)*2;
+            kmin_lat = 0.1;
+            kmax_lat = 0.4;
+            kmin_axi = 0.15;
             kmax_axi = 0.3;
             [trajectory(:,1,i), trajectory(:,2,i), trajectory(:,3,i)] = ...
                 gen_tubulin3d(walkLength, dk_lat, dk_axi, k0_lat, k0_axi, kmin_lat, kmax_lat,...
@@ -36,10 +36,10 @@ while nTry  <= imgNum
         for i = round(tubulinNum/3)+1 : 2*round(tubulinNum/3)
             x0 = [0 gardenSize(2)*rand(1) 0];
             k0_lat = 0.05*(rand(1)-0.5)*2;
-            k0_axi = 0.25 + 0.05*(rand(1)-0.5)*2;
-            kmin_lat = -0.1;
-            kmax_lat = 0.1;
-            kmin_axi = 0.2;
+            k0_axi = 0.25 - 0.05 + 0.05*(rand(1)-0.5)*2;
+            kmin_lat = -0.2;
+            kmax_lat = 0.2;
+            kmin_axi = 0.15;
             kmax_axi = 0.3;
             [trajectory(:,1,i), trajectory(:,2,i), trajectory(:,3,i)] = ...
                 gen_tubulin3d(walkLength, dk_lat, dk_axi, k0_lat, k0_axi, kmin_lat, kmax_lat,...
@@ -51,19 +51,21 @@ while nTry  <= imgNum
             k0_lat = 0.125 + 0.05*(rand(1)-0.5)*2;
             k0_axi = 0.25 + 0.05*(rand(1)-0.5)*2;
             kmin_lat = 0;
-            kmax_lat = 0.2;
-            kmin_axi = 0.2;
-            kmax_axi = 0.3;
+            kmax_lat = 0.25;
+            kmin_axi = 0.225;
+            kmax_axi = 0.275;
             [trajectory(:,1,i), trajectory(:,2,i), trajectory(:,3,i)] = ...
                 gen_tubulin3d(walkLength, dk_lat, dk_axi, k0_lat, k0_axi, kmin_lat, kmax_lat,...
                 kmin_axi, kmax_axi, v0, x0);    
         end
-    %     figure;
-    %     for i = 1 : tubulinNum    
-    %         scatter3(trajectory(:,1,i), trajectory(:,2,i), trajectory(:,3,i), 10, 'k','fill'); hold on;
-    %     end
-    %     hold off;
-    %     axis equal;
+        
+%         figure;
+%         for i = 1 : tubulinNum    
+%             scatter3(trajectory(:,1,i), trajectory(:,2,i), trajectory(:,3,i), 10, 'k','fill'); hold on;
+%         end
+%         hold off;
+%         axis equal;
+
         img = zeros(cropSize);
         for i = 1 : tubulinNum
             for p = 1 : walkLength
