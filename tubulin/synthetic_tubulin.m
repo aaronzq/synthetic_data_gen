@@ -84,6 +84,6 @@ out_noise = imnoise(out,'gaussian',1/255,0.000005);
 % colormap('hot')
 % colorbar;
 saveName = sprintf('./tubulins2d.tif');
-saveName2 = sprintf('./tubulins_noise2d.tif');
+saveName2 = sprintf('./tubulins2d_noise.tif');
 write3d(out, saveName);
 write3d(out_noise, saveName2);
