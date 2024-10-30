@@ -1,35 +1,47 @@
 %% generate 3D time sequence of synthetic spiking neurons
 %% ==============user-defined parameters starts============================= 
-%  dimension of the volume
-height = 330;       % px
-width  = 330;       % px
-depth  = 31;        % px
+%  dimension of the volume cube
+height = 150;                         % px
+width  = 150;                         % px
+depth  = 76;                          % px
+voxel_size   = [1.81, 4];             % um, [xy, z]
 
 %  shape of the neuron
-bead_size    = 8;                     % um
-aniso_factor = 1;                     % z elongation factor
+bead_size    = 10;                     % um
+aniso_factor = 2;                     % z elongation factor
 
 % spike signals, tune the fire rate and sampling rate for your prefered
 % spike train
 fr = 0.1;
 samplingRate = 5;
 tDecay = 1.2;
+signalNoise = 0;                   % 0~1, normally distributed noise added to signal
 
-%  statistics of the volume sequence
-voxel_size   = [0.34, 1];             % um, [xy, z]
-n_beads = 150;        % the number of neurons
-n_time = 200;         % the length of the sequence
-Max_intensity = 5000; % (in 16 bit)
+%  statistics of the sequence
+n_beads = 75;                        % the number of neurons
+n_time = 6000;                         % the length of the sequence
+Max_intensity = 100;                 % (in 16 bit)
+addGaussianNoise = true;                  % add image gaussian noise at final step
+gaussian_mean = 0.003;
+gaussian_var = 0;
+
+savePath = './Results';
+saveLabel = 'Neuron75';
+dirLabel = 'Label';
+dirDynamic = 'Dynamic';
 %% ==============user-defined parameters ends============================= 
 
-dir_label = '.\label';
-dir_dynamic = '.\dynamic';
-
-if ~exist(dir_label, 'dir')
-    mkdir(dir_label)
+if ~exist(savePath, 'dir')
+    mkdir(savePath);
 end
-if ~exist(dir_dynamic, 'dir')
-    mkdir(dir_dynamic)
+if ~exist(fullfile(savePath,saveLabel), 'dir')
+    mkdir(fullfile(savePath,saveLabel));
+end
+if ~exist(fullfile(savePath,saveLabel,dirLabel), 'dir')
+    mkdir(fullfile(savePath,saveLabel,dirLabel));
+end
+if ~exist(fullfile(savePath,saveLabel,dirDynamic), 'dir')
+    mkdir(fullfile(savePath,saveLabel,dirDynamic));
 end
 
 bead_size = [bead_size, bead_size * aniso_factor];
@@ -39,7 +51,7 @@ px_z = floor(bead_size(2) + 0.5);
 bead_unit_inten = generateBead3D([px_xy, px_xy, px_z] * 2 + 1, [px_xy, px_z] / 4, 1);         % an ellipsoid neuron
 
 bead_label_inten = bead_unit_inten;                                                           
-bead_label_inten(bead_label_inten>0.5) = 1; bead_label_inten(bead_label_inten<=0.5) = 0;      % a mask for the neuron
+bead_label_inten(bead_label_inten>1/2.718) = 1; bead_label_inten(bead_label_inten<=1/2.718) = 0;      % a mask for the neuron
 
 beads_posi = rand([n_beads, 3]);                                                              % random positions of the neurons
 beads_posi = beads_posi * 0.8 + 0.10;                                                         % constraint the neuron distribution in the inner volume
@@ -47,10 +59,7 @@ beads_posi = [beads_posi(:, 1) * height, beads_posi(:, 2) * width, beads_posi(:,
 
 
 figure;
-scatter3(beads_posi(:,1)*voxel_size(1), beads_posi(:,2)*voxel_size(1), beads_posi(:,3)*voxel_size(2)-30, 'filled'); % shift z to negative axis to emulate -30~0 um
-xlim([0,112]); 
-ylim([0,112]); 
-zlim([-31,0]);
+scatter3(beads_posi(:,1)*voxel_size(1), beads_posi(:,2)*voxel_size(1), beads_posi(:,3)*voxel_size(2), 'filled'); 
 axis equal
 set(gca, 'Projection', 'orthographic');
 set(gca, 'GridColor', 'k');
@@ -71,14 +80,14 @@ decayKernel = expDecay(tDecay, samplingRate);                              % dec
 bead_dynamic_inten = zeros(n_time, n_beads);
 for n=1:size(spikeMat,1)
     bead_dynamic_inten(:,n) = conv(double(spikeMat(n,:)), decayKernel, 'same');
-    noise = 1/25*randn(n_time,1);
+    noise = signalNoise*randn(n_time,1);
     bead_dynamic_inten(:,n) = abs(bead_dynamic_inten(:,n) + noise);
     bead_dynamic_inten(:,n) = bead_dynamic_inten(:,n) * Max_intensity;
 end
 
 
-% generate label for neuron searching, each neuron will be sequentially
-% indexed
+% generate label for neuron, each neuron is labeled with a different pixel
+% intensity
 volume_label = zeros(height, width, depth);
 for n = 1 : n_beads
     x = floor(beads_posi(n, 2));
@@ -100,11 +109,11 @@ for n = 1 : n_beads
 
 end
 volume_label = uint16(volume_label);
-write3d(volume_label, fullfile(dir_label, sprintf('neuron_n%d_label.tif', n_beads)), 16);
+write3d(volume_label, fullfile(savePath,saveLabel,dirLabel, 'neuron_label.tif'), 16);
 
 % generate the volume sequence
 for t = 1:n_time
-    
+    t
     volume_dynamic = zeros(height, width, depth);
     for n = 1 : n_beads
         x = floor(beads_posi(n, 2));
@@ -129,12 +138,16 @@ for t = 1:n_time
     end
     
     volume_dynamic = uint16(volume_dynamic);
-    volume_dynamic_noise = imnoise(volume_dynamic, 'gaussian', 0.003, 0.000005);   % add more noise to the volume
+    if addGaussianNoise
+        volume_dynamic_noise = imnoise(volume_dynamic, 'gaussian', gaussian_mean, gaussian_var);   % add more noise to the volume
+    else
+        volume_dynamic_noise = volume_dynamic;
+    end
     
-    write3d(volume_dynamic_noise, fullfile(dir_dynamic, sprintf('neuron_dynamic_n%d_%03d.tif', n_beads, t)), 16);
+    write3d(volume_dynamic_noise, fullfile(savePath,saveLabel, dirDynamic, sprintf('neuron_dynamic_%03d.tif', t)), 16);
     
     
 end
 
-save('./neuron_data150.mat', 'bead_dynamic_inten', 'beads_posi', '-v7.3')
+save(fullfile(savePath,saveLabel,'neuron_signal_gt.mat'), 'bead_dynamic_inten', 'beads_posi', '-v7.3');
 disp('Done.');
